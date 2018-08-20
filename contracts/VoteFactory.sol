@@ -12,7 +12,7 @@ contract VoteFactory is Ownable {
         _;
     }
 
-    event CreateVote(uint256 id, string question);
+    event CreateVote(uint256 id, string question, bytes32[] answers);
     event StartVote(uint256 id);
     event StopVote(uint256 id);
 
@@ -27,7 +27,7 @@ contract VoteFactory is Ownable {
     struct Vote {
         State state;
         string question;
-        string[] answers;
+        bytes32[] answers;
         address[] voters;
         
         mapping (uint256 => uint256) voterToAnswer;
@@ -39,7 +39,7 @@ contract VoteFactory is Ownable {
     function kill() public onlyOwner {
         selfdestruct(owner);
     }
-    
+ /*   
     function createVote(string _question) external {
         uint256 voteId = votes.push(Vote(State.Initial, _question, new string[](0), new address[](0))) - 1;
         voteToOwner[voteId] = msg.sender;
@@ -49,8 +49,14 @@ contract VoteFactory is Ownable {
     function addAnswer(uint256 _voteId, string _answer) external ownerOfVote(_voteId) {
         votes[_voteId].answers.push(_answer);
     }
+*/    
+    function createVote(string _question, bytes32[] _answers) external {
+        uint256 voteId = votes.push(Vote(State.Initial, _question, _answers, new address[](0))) - 1;
+        voteToOwner[voteId] = msg.sender;
+        emit CreateVote(voteId, _question, _answers);
+    }
 
-    function voteAnswer(uint256 _voteId, uint256 _answerId) public view returns(string) {
+    function voteAnswer(uint256 _voteId, uint256 _answerId) public view returns(bytes32) {
         return votes[_voteId].answers[_answerId];
     }
     
@@ -108,7 +114,7 @@ contract VoteFactory is Ownable {
         return MAX_VOTERS + 1;
     }
 
-    function results(uint256 _voteId) public view returns(string) {
+    function results(uint256 _voteId) public view returns(bytes32) {
         Vote storage vote = votes[_voteId];
         uint256[] memory result = new uint256[](vote.answers.length);
 
