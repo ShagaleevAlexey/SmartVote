@@ -3,7 +3,10 @@ pragma solidity ^0.4.19;
 import "./Ownable.sol";
 import "./SafeMath.sol";
 
-contract VoteFactory is Ownable, SafeMath {
+contract VoteFactory is Ownable {
+
+    using SafeMath for uint256;
+
     modifier ownerOfVote(uint256 _voteId) {
         require(voteToOwner[_voteId] == msg.sender);
         _;
@@ -14,7 +17,7 @@ contract VoteFactory is Ownable, SafeMath {
     }
 
     modifier timeDurationtState(uint256 _voteId, DurationTimeOption _durationState) {
-        require(votes[_voteId].duration == _durationState, "");
+        require(votes[_voteId].durationState == _durationState, "");
         _;
     }
 
@@ -54,7 +57,7 @@ contract VoteFactory is Ownable, SafeMath {
     }
 
     function createVote(string _question, DurationTimeOption _durationState) external {
-        uint256 voteId = votes.push(Vote(State.Initial, _question, new string[](0), new address[](0)), _durationState, uint256(0)) - 1;
+        uint256 voteId = votes.push(Vote(State.Initial, _question, new string[](0), new address[](0), _durationState, uint256(0))) - 1;
         voteToOwner[voteId] = msg.sender;
         emit CreateVote(voteId, _question);
     }
@@ -74,7 +77,7 @@ contract VoteFactory is Ownable, SafeMath {
 
     function startVote(uint256 _voteId, uint256 _timeDuration) external ownerOfVote(_voteId) timeDurationtState(_voteId, DurationTimeOption.On) {
         votes[_voteId].state = State.Started;
-        votes[_voteId].lockTime = add (now, _timeDuration * 1 seconds);
+        votes[_voteId].lockTime = now.add(_timeDuration * 1 seconds);
         emit StartVote(_voteId);
 
     }
