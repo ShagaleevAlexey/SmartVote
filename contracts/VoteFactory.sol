@@ -1,14 +1,23 @@
 pragma solidity ^0.4.19;
 
 import "./Ownable.sol";
+import "./SafeMath.sol";
 
 contract VoteFactory is Ownable {
+
+    using SafeMath for uint256;
+
     modifier ownerOfVote(uint256 _voteId) {
         require(voteToOwner[_voteId] == msg.sender);
         _;
     }
     modifier stateOf(uint256 _voteId, State _state) {
         require(votes[_voteId].state == _state);
+        _;
+    }
+
+    modifier timeDurationtState(uint256 _voteId, DurationTimeOption _durationState) {
+        require(votes[_voteId].durationState == _durationState, "");
         _;
     }
 
@@ -22,6 +31,11 @@ contract VoteFactory is Ownable {
         Stopped
     }
 
+    enum DurationTimeOption {
+        On,
+        Off
+    }
+
     uint256 constant MAX_VOTERS = 1e10;
 
     struct Vote {
@@ -29,6 +43,8 @@ contract VoteFactory is Ownable {
         string question;
         string[] answers;
         address[] voters;
+        DurationTimeOption durationState;  
+        uint256 lockTime;
         
         mapping (uint256 => uint256) voterToAnswer;
     }
@@ -39,9 +55,9 @@ contract VoteFactory is Ownable {
     function kill() public onlyOwner {
         selfdestruct(owner);
     }
-    
-    function createVote(string _question) external {
-        uint256 voteId = votes.push(Vote(State.Initial, _question, new string[](0), new address[](0))) - 1;
+
+    function createVote(string _question, DurationTimeOption _durationState) external {
+        uint256 voteId = votes.push(Vote(State.Initial, _question, new string[](0), new address[](0), _durationState, uint256(0))) - 1;
         voteToOwner[voteId] = msg.sender;
         emit CreateVote(voteId, _question);
     }
@@ -53,10 +69,29 @@ contract VoteFactory is Ownable {
     function voteAnswer(uint256 _voteId, uint256 _answerId) public view returns(string) {
         return votes[_voteId].answers[_answerId];
     }
-    
+
     function startVote(uint256 _voteId) external ownerOfVote(_voteId) {
         votes[_voteId].state = State.Started;
         emit StartVote(_voteId);
+    }
+
+    function startVote(uint256 _voteId, uint256 _timeDuration) external ownerOfVote(_voteId) timeDurationtState(_voteId, DurationTimeOption.On) {
+        votes[_voteId].state = State.Started;
+        votes[_voteId].lockTime = now.add(_timeDuration * 1 seconds);
+        emit StartVote(_voteId);
+
+    }
+
+    function getTime() public returns(uint256) {
+        return now;
+    } 
+
+    function getDurationState(uint256 _voteId) public returns(DurationTimeOption) {
+        return votes[_voteId].durationState;
+    }
+
+    function getLockTime(uint256 _voteId) public returns(uint256) {
+        return votes[_voteId].lockTime;
     }
     
     function stopVote(uint256 _voteId) external ownerOfVote(_voteId) stateOf(_voteId, State.Started) {
