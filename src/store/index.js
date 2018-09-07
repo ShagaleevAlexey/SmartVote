@@ -30,11 +30,7 @@ const store = () => new Vuex.Store({
     account: {
       address: undefined,
       balance: undefined
-    },
-    vote: undefined,
-    currentStage: undefined,
-    stages: undefined,
-    result: undefined
+    }
   },
   mutations: {
     registerWeb3(state, payload) {
@@ -56,18 +52,6 @@ const store = () => new Vuex.Store({
     updateAccount(state, payload) {
       state.account.address = payload.coinbase
       state.account.balance = payload.balance
-    },
-    createVote(state, newVote) {
-      state.vote = newVote;
-    },
-    setCurrentStage(state, newStage) {
-      state.currentStage = newStage;
-    },
-    setStages(state, stages) {
-      state.stages = stages;
-    },
-    setResult(state, result) {
-      state.result = result;
     }
   },
   actions: {

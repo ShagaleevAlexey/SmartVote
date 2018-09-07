@@ -7,22 +7,17 @@
     </div>
     <div class="slds-form-element">
       <div class="slds-form-element__control">
-        <input type="text" id="text-input-id-1" class="slds-input" placeholder="Enter answer" v-model="answers_a[0]" />
+        <input type="text" id="text-input-id-1" class="slds-input" placeholder="Enter answer" v-model="answers_a[0]" maxlength="32" />
       </div>
     </div>
     <div class="slds-form-element">
       <div class="slds-form-element__control">
-        <input type="text" id="text-input-id-1" class="slds-input" placeholder="Enter answer" v-model="answers_a[1]" />
-      </div>
-    </div>
-    <div class="slds-form-element">
-      <div class="slds-form-element__control">
-        <input type="text" id="text-input-id-1" class="slds-input" placeholder="Enter answer" v-model="answers_a[2]" />
+        <input type="text" id="text-input-id-1" class="slds-input" placeholder="Enter answer" v-model="answers_a[1]" maxlength="32" />
       </div>
     </div>
     <div class="slds-form-element" v-for="(answer, key) in answers_b" :key="key">
       <div class="slds-form-element__control">
-        <input type="text" id="text-input-id-1" class="slds-input" placeholder="Enter answer" v-model="answers_b[key]" />
+        <input type="text" id="text-input-id-1" class="slds-input" placeholder="Enter answer" v-model="answers_b[key]" maxlength="32" />
       </div>
     </div>
     <div class="slds-form-element">

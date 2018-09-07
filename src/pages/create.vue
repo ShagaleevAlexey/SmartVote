@@ -7,11 +7,8 @@
     <div class="create__content">
       <div class="create__form" v-if="current=='create'">
         <div class="slds-grid slds-gutters slds-wrap">
-          <div class="slds-col slds-medium-size_1-of-2 slds-small-size_1-of-1">
+          <div class="slds-col slds-medium-size slds-small-size_1-of-1">
             <question-form @create="onCreate" />
-          </div>
-          <div class="slds-col slds-show_medium slds-medium-size_1-of-2 slds-small-size_1-of-1 create__image">
-            <img src="http://via.placeholder.com/240x320">
           </div>
         </div>
       </div>
@@ -24,14 +21,12 @@
         </div>
         <p class="create__waiting-text">Ожидается подтверждение транзакции. <br>Пожалуйста, подождите</p>
       </div>
-      <div class="create__form" v-if="current=='finish'">
-        <vote-result :result="result" />
-      </div>
     </div>
   </section>
 </template>
 
 <script>
+import {toHex} from '../util/strHex.js';
 import ProcessBar from "~/components/ProcessBar.vue";
 import QuestionForm from "~/components/QuestionForm.vue";
 import VoteResult from "~/components/VoteResult.vue";
@@ -44,8 +39,8 @@ export default {
   },
   data() {
     return {
-      current: this.$store.state.currentStage || "create",
-      stages: this.$store.state.stages || {
+      current: "create",
+      stages: {
         create: {
           title: "Create vote",
           complete: false
@@ -53,14 +48,9 @@ export default {
         waiting: {
           title: "Votes waiting",
           complete: false
-        },
-        finish: {
-          title: "Finish",
-          complete: false
         }
       },
-      vote: this.$store.state.vote || {},
-      result: this.$store.state.result || {}
+      vote: {}
     };
   },
   methods: {
@@ -68,61 +58,46 @@ export default {
       this.vote = {
         question: data.question,
         answers: data.answers,
-        address: [
-          "1DkyBEKt5S2GDtv7aQw6rQepAvnsRyHoYM",
-          "357JcFvqiUvpmwYDBerqt2KYAXWQGFXuVw",
-          "15qB19Tb8HsEAuj9atKXA5FTYud4rNWupz",
-          "bc1qu8ppk0fwwqwsvr70pzv5yw5j0f3zm4uvf9xrfr",
-          "bc1qdpkq28wrkesa8tszjgma7d55nshwp69pmazn2m"
-        ]
       };
-      this.$store.commit("createVote", this.vote);
       this.startTransaction();
     },
     changeStage(stage) {
       this.stages[this.current].complete = true;
       this.current = stage;
-      this.$store.commit("setStages", this.stages);
-      this.$store.commit("setCurrentStage", this.current);
     },
     startTransaction() {
-      /**
-       * Fake transaction
-       */
-      this.changeStage("waiting");
-      setTimeout(() => {
-        this.changeStage("finish");
-        this.showResults();
-      }, 5000);
-    },
-    showResults() {
-      /**
-       * Fake results
-       */
-      let vote = this.$store.state.vote,
-        result;
-      let fakeVotes = () => {
-        return parseInt(Math.random() * 60);
-      };
-      result = vote.answers.map(answer => {
-        return {
-          answer: answer,
-          votes: fakeVotes()
-        };
-      });
-      this.result = {
-        question: this.vote.question,
-        answers: result,
-        total: this.calcVotes(result)
-      };
-      this.$store.commit("setResult", this.result);
-    },
-    calcVotes(result) {
-      let total = 0;
-      result.forEach(item => {
-        total += parseInt(item.votes);
-      });
-      return total;
+      var contractInstance = this.$store.state.voteFactory.contractInstance
+      var account = this.$store.state.account.address
+      var self = this
+      if (account == undefined) {
+        console.log('need login')
+      }
+      else {
+        this.changeStage("waiting");
+        var answers = [];
+        this.vote.answers.forEach(function(item) {
+          answers.push('0x' + toHex(item))
+        });
+        contractInstance.methods.createVote(this.vote.question, answers).send({
+          from: account,
+          gas: 1500000
+        })
+        .on('transactionHash', function(hash){
+          console.log(hash)
+        })
+        .on('confirmation', function(confirmationNumber, receipt){
+          if(confirmationNumber == 1) {
+            console.log(receipt)
+            var path = "/vote/" + receipt.events.CreateVote.returnValues.id
+            self.changeStage("finish");
+            self.$router.replace({ path: path })
+          }
+        })
+        .on('error', function(error) {
+          console.log(error)
+          document.location.href = "/create"
+        })
+      }
     }
   }
 };
