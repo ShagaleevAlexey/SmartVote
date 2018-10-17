@@ -1,6 +1,6 @@
 <template>
   <section class="container create">
-    <h1 class="title">Title</h1>
+    <h1 class="title">Create Vote</h1>
     <div class="create__process">
       <process-bar :stages="stages" :current="current" />
     </div>
